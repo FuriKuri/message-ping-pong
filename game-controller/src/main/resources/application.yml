@@ -1,0 +1,3 @@
+spring.redis.cluster.max-redirects: 2
+spring.redis.sentinel.master: mymaster
+spring.redis.sentinel.nodes: redis-sentinel:26379
