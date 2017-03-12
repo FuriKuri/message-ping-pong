@@ -9,5 +9,5 @@ docker service create --name zookeeper3 -e ZOO_MY_ID="3" -e ZOO_SERVERS="server.
 docker service create --name kafka --replicas 3 --network game-network -e KAFKA_ADVERTISED_PORT=9092 -e KAFKA_CREATE_TOPICS="ping:4:1,pong:4:1,controller:4:1" -e KAFKA_ZOOKEEPER_CONNECT="zookeeper1:2181,zookeeper2:2181,zookeeper3:2181" wurstmeister/kafka
 
 docker service create --name redis-master --network game-network redis:3-alpine
-docker service create --name redis-slave --network game-network redis:3-alpine redis-server --slaveof redis-master 6379
-docker service create --name redis-sentinel --network game-network -e SENTINEL_DOWN_AFTER=5000 -e SENTINEL_FAILOVER=5000 furikuri/redis-sentinel
+docker service create --name redis-slave --replicas 2 --network game-network redis:3-alpine redis-server --slaveof redis-master 6379
+docker service create --name redis-sentinel --replicas 3 --network game-network -e SENTINEL_DOWN_AFTER=5000 -e SENTINEL_FAILOVER=5000 furikuri/redis-sentinel
