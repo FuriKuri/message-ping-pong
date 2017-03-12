@@ -54,9 +54,7 @@ services:
   game-controller:
     build: game-controller
     environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-    ports:
-      - 8080:8080  
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092 
     links:
       - redis-sentinel
       - kafka
@@ -74,3 +72,9 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     links:
       - kafka
+  game-proxy:
+    build: proxy
+    ports:
+      - 8080:8080  
+    links:
+      - game-controller
