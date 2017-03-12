@@ -51,8 +51,6 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
       KAFKA_CREATE_TOPICS: "ping:4:1,pong:4:1,controller:4:1"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
   game-controller:
     build: game-controller
     environment:
