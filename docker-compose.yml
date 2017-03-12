@@ -21,9 +21,41 @@ services:
     links:
       - redis-master
       - redis-slave
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "ping:4:1,pong:4:1,controller:4:1"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
   game-controller:
     build: game-controller
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     ports:
       - 8080:8080  
     links:
       - redis-sentinel
+      - kafka
+  game-client-ping:
+    build: game-client
+    environment:
+      - SPRING_PROFILES_ACTIVE=ping
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    links:
+      - kafka
+  game-client-pong:
+    build: game-client
+    environment:
+      - SPRING_PROFILES_ACTIVE=pong
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    links:
+      - kafka
