@@ -11,7 +11,3 @@ docker service create --name kafka --replicas 3 --network game-network -e KAFKA_
 docker service create --name redis-master --network game-network redis:3-alpine
 docker service create --name redis-slave --network game-network redis:3-alpine redis-server --slaveof redis-master 6379
 docker service create --name redis-sentinel --network game-network -e SENTINEL_DOWN_AFTER=5000 -e SENTINEL_FAILOVER=5000 furikuri/redis-sentinel
-
-#sleep 15
-
-#docker service scale kafka=2
