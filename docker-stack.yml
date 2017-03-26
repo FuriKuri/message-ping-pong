@@ -1,0 +1,101 @@
+version: '3'
+services:
+  redis-master:
+    image: redis:3-alpine
+    ports:
+      - 6379
+  redis-slave:
+    image: redis:3-alpine
+    command: redis-server --slaveof redis-master 6379
+    depends_on:
+      - redis-master
+    ports:
+      - 6379
+    deploy:
+      mode: replicated
+      replicas: 2
+  redis-sentinel:
+    image: furikuri/redis-sentinel
+    environment:
+      - SENTINEL_DOWN_AFTER=5000
+      - SENTINEL_FAILOVER=5000  
+    ports:
+      - 26379  
+    depends_on:
+      - redis-master
+      - redis-slave
+    deploy:
+      mode: replicated
+      replicas: 3
+  zookeeper1:
+    image: zookeeper
+    ports:
+      - 2181
+    environment:
+        ZOO_MY_ID: 1
+        ZOO_SERVERS: server.1=zookeeper1:2888:3888 server.2=zookeeper2:2888:3888 server.3=zookeeper3:2888:3888
+  zookeeper2:
+    image: zookeeper
+    ports:
+      - 2181
+    environment:
+        ZOO_MY_ID: 2
+        ZOO_SERVERS: server.1=zookeeper1:2888:3888 server.2=zookeeper2:2888:3888 server.3=zookeeper3:2888:3888
+  zookeeper3:
+    image: zookeeper
+    ports:
+      - 2181
+    environment:
+        ZOO_MY_ID: 3
+        ZOO_SERVERS: server.1=zookeeper1:2888:3888 server.2=zookeeper2:2888:3888 server.3=zookeeper3:2888:3888
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+      KAFKA_CREATE_TOPICS: "ping:4:1,pong:4:1,controller:4:1"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    deploy:
+      mode: replicated
+      replicas: 3
+  game-controller:
+    image: furikuri/game-controller
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092 
+    depends_on:
+      - redis-sentinel
+      - kafka
+    deploy:
+      mode: replicated
+      replicas: 2
+  game-client-ping:
+    image: furikuri/game-client
+    environment:
+      - SPRING_PROFILES_ACTIVE=ping
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - kafka
+    deploy:
+      mode: replicated
+      replicas: 2
+  game-client-pong:
+    image: furikuri/game-client
+    environment:
+      - SPRING_PROFILES_ACTIVE=pong
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - kafka
+    deploy:
+      mode: replicated
+      replicas: 2
+  game-proxy:
+    image: furikuri/game-proxy
+    ports:
+      - 8080:8080  
+    depends_on:
+      - game-controller
+    deploy:
+      mode: global
